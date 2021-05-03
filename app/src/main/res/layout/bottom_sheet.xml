@@ -3,29 +3,43 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/colorSecondaryVariant"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:padding="20dp">
 
     <EditText
+        android:id="@+id/taskText"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:hint="New Task" />
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="15dp">
+        android:layout_height="wrap_content">
 
         <ImageView
+            android:id="@+id/calendarBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:src="@drawable/calendar"/>
+            android:layout_marginEnd="15dp"
+            android:src="@drawable/calendar" />
 
-        <Button
+        <ImageView
+            android:id="@+id/clockBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="SAVE"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/calendarBtn"
+            android:src="@drawable/clock" />
+
+        <Button
+            android:id="@+id/saveBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
-            android:textColor="?attr/colorOnSecondary"/>
+            android:background="@android:color/transparent"
+            android:text="SAVE"
+            android:textColor="?attr/colorOnSecondary" />
 
     </RelativeLayout>
 

@@ -11,15 +11,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:titleTextColor="?attr/colorOnSecondary"
+        android:background="?attr/colorPrimaryVariant"
         app:title="@string/app_name"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/add"
         android:layout_alignParentEnd="true"
-        android:background="?attr/colorSecondary"
-        android:backgroundTint="?attr/colorSecondary"
         android:layout_alignParentBottom="true"
         android:layout_margin="32dp"
         app:elevation="15dp"/>

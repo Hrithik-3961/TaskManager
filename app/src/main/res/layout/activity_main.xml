@@ -13,7 +13,8 @@
         android:layout_height="wrap_content"
         app:titleTextColor="?attr/colorOnSecondary"
         android:background="?attr/colorPrimary"
-        app:title="@string/app_name"/>
+        app:title="@string/app_name"
+        app:menu="@menu/settings"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

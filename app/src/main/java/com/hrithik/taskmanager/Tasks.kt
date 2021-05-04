@@ -1,4 +1,6 @@
 package com.hrithik.taskmanager
 
-class Tasks(var task: String, var dateTime: String) {
+import java.util.*
+
+class Tasks(var task: String, var dateTime: String, var date: Date) {
 }

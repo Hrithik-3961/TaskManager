@@ -63,8 +63,9 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
             override fun afterTextChanged(s: Editable) {
                 saveBtn.isEnabled = s.isNotEmpty()
             }
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) { }
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) { }
+
+            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
         })
 
         calendarBtn.setOnClickListener { pickDate() }
@@ -82,7 +83,8 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
         })
 
         saveBtn.setOnClickListener {
-            val task = Tasks(taskText.text.toString(), dateTimeText.text.toString())
+            val task =
+                Tasks(taskText.text.toString(), dateTimeText.text.toString(), currentDateTime.time)
             mListener.onSaveClick(task)
             dismiss()
         }
@@ -191,7 +193,7 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
         fun onSaveClick(task: Tasks)
     }
 
-    fun setOnSaveClickListener(listener: BottomSheetListener) {
+    private fun setOnSaveClickListener(listener: BottomSheetListener) {
         mListener = listener
     }
 

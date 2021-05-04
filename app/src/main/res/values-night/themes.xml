@@ -3,14 +3,15 @@
     <style name="Theme.TaskManager" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">@color/dark_grey_1</item>
-        <item name="colorPrimaryVariant">@color/dark_grey_3</item>
-        <item name="colorOnPrimary">@color/black</item>
+        <item name="colorPrimaryVariant">@color/dark_grey_2</item>
+        <item name="colorOnPrimary">@color/light_grey</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/dark_grey_4</item>
-        <item name="colorSecondaryVariant">@color/dark_grey_2</item>
+        <item name="colorSecondary">@color/light_blue_1</item>
+        <item name="colorSecondaryVariant">@color/light_blue_2</item>
         <item name="colorOnSecondary">@color/white</item>
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+
 </resources>

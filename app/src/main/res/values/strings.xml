@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Task Manager</string>
+    <string name="save">SAVE</string>
 </resources>

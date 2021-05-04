@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/colorSecondaryVariant"
+    android:background="?attr/colorPrimary"
     android:orientation="vertical"
     android:padding="20dp">
 
@@ -10,7 +11,23 @@
         android:id="@+id/taskText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="New Task" />
+        android:textColor="?attr/colorOnSecondary"
+        android:hint="New Task"
+        android:maxLines="1" />
+
+    <TextView
+        android:id="@+id/dateTimeText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="15dp"
+        android:layout_marginVertical="10dp"
+        android:background="@drawable/date"
+        android:drawablePadding="10dp"
+        android:padding="8dp"
+        android:textStyle="bold"
+        android:textColor="?attr/colorOnPrimary"
+        android:visibility="gone"
+        app:drawableEndCompat="@drawable/cross" />
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -22,7 +39,8 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_marginEnd="15dp"
-            android:src="@drawable/calendar" />
+            android:background="@drawable/calendar"
+            android:backgroundTint="?attr/colorSecondary" />
 
         <ImageView
             android:id="@+id/clockBtn"
@@ -30,7 +48,8 @@
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:layout_toEndOf="@id/calendarBtn"
-            android:src="@drawable/clock" />
+            android:background="@drawable/clock"
+            android:backgroundTint="?attr/colorSecondary" />
 
         <Button
             android:id="@+id/saveBtn"
@@ -38,8 +57,9 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:background="@android:color/transparent"
-            android:text="SAVE"
-            android:textColor="?attr/colorOnSecondary" />
+            android:text="@string/save"
+            android:enabled="false"
+            android:textColor="@drawable/btn_color"/>
 
     </RelativeLayout>
 

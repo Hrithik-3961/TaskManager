@@ -8,11 +8,18 @@
     android:background="?attr/colorPrimary">
 
     <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:titleTextColor="?attr/colorOnSecondary"
-        android:background="?attr/colorPrimaryVariant"
+        android:background="?attr/colorPrimary"
         app:title="@string/app_name"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/toolBar"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"

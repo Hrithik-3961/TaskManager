@@ -100,7 +100,8 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
         val minute = if (timePicked) currentDateTime.get(Calendar.MINUTE) else 59
 
         val datePickerDialog = DatePickerDialog(requireContext(), { _, year, month, day ->
-            currentDateTime.set(year, month, day, hour, minute)
+            currentDateTime.set(year, month, day, hour, minute, 0)
+            currentDateTime.set(Calendar.MILLISECOND, 0)
             val sdf = SimpleDateFormat(getPattern())
             dateTimeText.text = sdf.format(currentDateTime.time)
             dateTimeText.visibility = View.VISIBLE
@@ -139,14 +140,16 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
             )
 
         val timePickerDialog = TimePickerDialog(requireContext(), { _, hour, minute ->
-            currentDateTime.set(year, month, day, hour, minute)
+            currentDateTime.set(year, month, day, hour, minute, 0)
+            currentDateTime.set(Calendar.MILLISECOND, 0)
             timePicked = true
             val sdf = SimpleDateFormat(getPattern())
             dateTimeText.text = sdf.format(currentDateTime.time)
             dateTimeText.visibility = View.VISIBLE
         }, startHour, startMinute, false)
         timePickerDialog.setButton(TimePickerDialog.BUTTON_NEUTRAL, "Clear") { dialogInterface, _ ->
-            currentDateTime.set(year, month, day, 23, 59)
+            currentDateTime.set(year, month, day, 23, 59, 0)
+            currentDateTime.set(Calendar.MILLISECOND, 0)
             timePicked = false
             dialogInterface.dismiss()
             val sdf = SimpleDateFormat(getPattern())

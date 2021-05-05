@@ -34,13 +34,12 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.setHasFixedSize(true)
         adapter = if (sorted) {
-            recyclerView.addItemDecoration(SeparationDecorator(this))
             TasksAdapter(this, sortedList)
         } else
             TasksAdapter(this, unsortedList)
+        adapter.setHasStableIds(true)
         recyclerView.adapter = adapter
     }
-
 
     override fun onSaveClick(task: Tasks) {
         unsortedList.add(task)
@@ -50,17 +49,18 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
         if (sortedList.isEmpty())
             sortedList.add(task)
         else {
-            if (task.dateTime.isEmpty()) {
-                while (pos < sortedList.size && sortedList[pos].dateTime.isNotBlank()) pos++
-                while (pos < sortedList.size && sortedList[pos].date.before(task.date)) pos++
-            } else
-                while (pos < sortedList.size && sortedList[pos].date.before(task.date) && sortedList[pos].dateTime.isNotBlank()) pos++
+            if (task.dateTime.isEmpty())
+                pos = sortedList.size
+            else
+                while (pos < sortedList.size && sortedList[pos].dateTime.isNotEmpty() && sortedList[pos].date <= task.date)
+                    pos++
             sortedList.add(pos, task)
         }
         if (!sorted)
             adapter.notifyItemInserted(unsortedList.size)
-        else
+        else {
             adapter.notifyItemInserted(pos)
+        }
     }
 
     fun showSortByDialog(item: MenuItem) {
@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
         val dialog = Dialog(this)
-        dialog.setContentView(R.layout.item_task_sorted)
+        dialog.setContentView(R.layout.sort_by_dialog)
         val layout = dialog.linear
         layout.title.text = resources.getString(R.string.sort_by)
 
@@ -87,9 +87,6 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
         timeAdded.radioBtn.setOnClickListener {
             prefs.edit().putBoolean("sorted", false).apply()
             if (sorted) {
-                while (recyclerView.itemDecorationCount > 0) {
-                    recyclerView.removeItemDecorationAt(0)
-                }
                 adapter = TasksAdapter(this, unsortedList)
                 recyclerView.adapter = adapter
             }
@@ -99,7 +96,6 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
         dueDate.radioBtn.setOnClickListener {
             prefs.edit().putBoolean("sorted", true).apply()
             if (!sorted) {
-                recyclerView.addItemDecoration(SeparationDecorator(this))
                 adapter = TasksAdapter(this, sortedList)
                 recyclerView.adapter = adapter
             }
@@ -109,9 +105,6 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
         timeAdded.itemText.setOnClickListener {
             prefs.edit().putBoolean("sorted", false).apply()
             if (sorted) {
-                while (recyclerView.itemDecorationCount > 0) {
-                    recyclerView.removeItemDecorationAt(0)
-                }
                 adapter = TasksAdapter(this, unsortedList)
                 recyclerView.adapter = adapter
             }
@@ -121,7 +114,6 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
         dueDate.itemText.setOnClickListener {
             prefs.edit().putBoolean("sorted", true).apply()
             if (!sorted) {
-                recyclerView.addItemDecoration(SeparationDecorator(this))
                 adapter = TasksAdapter(this, sortedList)
                 recyclerView.adapter = adapter
             }

@@ -13,8 +13,9 @@ import android.view.View.OnTouchListener
 import android.view.inputmethod.InputMethodManager
 import androidx.core.content.ContextCompat
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import com.hrithik.taskmanager.data.Tasks
 import kotlinx.android.synthetic.main.bottom_sheet.*
-import java.text.SimpleDateFormat
+import java.text.DateFormat
 import java.util.*
 
 
@@ -84,7 +85,11 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
 
         saveBtn.setOnClickListener {
             val task =
-                Tasks(taskText.text.toString(), dateTimeText.text.toString(), currentDateTime.time)
+                Tasks(
+                    taskText.text.toString(),
+                    dateTimeText.text.toString(),
+                    currentDateTime.timeInMillis
+                )
             mListener.onSaveClick(task)
             dismiss()
         }
@@ -102,8 +107,9 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
         val datePickerDialog = DatePickerDialog(requireContext(), { _, year, month, day ->
             currentDateTime.set(year, month, day, hour, minute, 0)
             currentDateTime.set(Calendar.MILLISECOND, 0)
-            val sdf = SimpleDateFormat(getPattern())
-            dateTimeText.text = sdf.format(currentDateTime.time)
+            val df = DateFormat.getDateInstance()
+            df.parse(getPattern())
+            dateTimeText.text = df.format(currentDateTime.timeInMillis)
             dateTimeText.visibility = View.VISIBLE
         }, startYear, startMonth, startDay)
         val datePicker = datePickerDialog.datePicker
@@ -112,15 +118,15 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
         when (context?.resources?.configuration?.uiMode?.and(Configuration.UI_MODE_NIGHT_MASK)) {
             Configuration.UI_MODE_NIGHT_YES -> {
                 datePickerDialog.getButton(DatePickerDialog.BUTTON_POSITIVE)
-                    .setTextColor(ContextCompat.getColor(context!!, R.color.light_blue_1))
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.light_blue_1))
                 datePickerDialog.getButton(DatePickerDialog.BUTTON_NEGATIVE)
-                    .setTextColor(ContextCompat.getColor(context!!, R.color.light_grey))
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.light_grey))
             }
             Configuration.UI_MODE_NIGHT_NO -> {
                 datePickerDialog.getButton(DatePickerDialog.BUTTON_POSITIVE)
-                    .setTextColor(ContextCompat.getColor(context!!, R.color.dark_blue_1))
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.dark_blue_1))
                 datePickerDialog.getButton(DatePickerDialog.BUTTON_NEGATIVE)
-                    .setTextColor(ContextCompat.getColor(context!!, R.color.black))
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
             }
         }
     }
@@ -143,8 +149,9 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
             currentDateTime.set(year, month, day, hour, minute, 0)
             currentDateTime.set(Calendar.MILLISECOND, 0)
             timePicked = true
-            val sdf = SimpleDateFormat(getPattern())
-            dateTimeText.text = sdf.format(currentDateTime.time)
+            val df = DateFormat.getDateInstance()
+            df.parse(getPattern())
+            dateTimeText.text = df.format(currentDateTime.timeInMillis)
             dateTimeText.visibility = View.VISIBLE
         }, startHour, startMinute, false)
         timePickerDialog.setButton(TimePickerDialog.BUTTON_NEUTRAL, "Clear") { dialogInterface, _ ->
@@ -152,27 +159,28 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
             currentDateTime.set(Calendar.MILLISECOND, 0)
             timePicked = false
             dialogInterface.dismiss()
-            val sdf = SimpleDateFormat(getPattern())
-            dateTimeText.text = sdf.format(currentDateTime.time)
+            val df = DateFormat.getDateInstance()
+            df.parse(getPattern())
+            dateTimeText.text = df.format(currentDateTime.timeInMillis)
             dateTimeText.visibility = View.VISIBLE
         }
         timePickerDialog.show()
         when (context?.resources?.configuration?.uiMode?.and(Configuration.UI_MODE_NIGHT_MASK)) {
             Configuration.UI_MODE_NIGHT_YES -> {
                 timePickerDialog.getButton(TimePickerDialog.BUTTON_POSITIVE)
-                    .setTextColor(ContextCompat.getColor(context!!, R.color.light_blue_1))
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.light_blue_1))
                 timePickerDialog.getButton(DatePickerDialog.BUTTON_NEGATIVE)
-                    .setTextColor(ContextCompat.getColor(context!!, R.color.light_grey))
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.light_grey))
                 timePickerDialog.getButton(DatePickerDialog.BUTTON_NEUTRAL)
-                    .setTextColor(ContextCompat.getColor(context!!, R.color.light_grey))
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.light_grey))
             }
             Configuration.UI_MODE_NIGHT_NO -> {
                 timePickerDialog.getButton(TimePickerDialog.BUTTON_POSITIVE)
-                    .setTextColor(ContextCompat.getColor(context!!, R.color.dark_blue_1))
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.dark_blue_1))
                 timePickerDialog.getButton(DatePickerDialog.BUTTON_NEGATIVE)
-                    .setTextColor(ContextCompat.getColor(context!!, R.color.black))
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
                 timePickerDialog.getButton(DatePickerDialog.BUTTON_NEUTRAL)
-                    .setTextColor(ContextCompat.getColor(context!!, R.color.black))
+                    .setTextColor(ContextCompat.getColor(requireContext(), R.color.black))
             }
         }
     }

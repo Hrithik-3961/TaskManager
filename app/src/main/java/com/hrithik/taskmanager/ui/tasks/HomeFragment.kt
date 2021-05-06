@@ -1,44 +1,72 @@
-package com.hrithik.taskmanager
+package com.hrithik.taskmanager.ui.tasks
 
 import android.app.Dialog
 import android.content.SharedPreferences
 import android.os.Bundle
-import android.view.MenuItem
+import android.view.*
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
-import kotlinx.android.synthetic.main.activity_main.*
+import com.hrithik.taskmanager.BottomSheetDialog
+import com.hrithik.taskmanager.R
+import com.hrithik.taskmanager.data.Tasks
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.android.synthetic.main.fragment_home.*
 import kotlinx.android.synthetic.main.item_dialog.view.*
 import kotlinx.android.synthetic.main.item_task_sorted.*
-import kotlinx.android.synthetic.main.item_task_sorted.view.*
+import kotlinx.android.synthetic.main.sort_by_dialog.view.*
 
-class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener {
+@AndroidEntryPoint
+class HomeFragment : Fragment(R.layout.fragment_home), BottomSheetDialog.BottomSheetListener {
 
     private var unsortedList = ArrayList<Tasks>()
     private var sortedList = ArrayList<Tasks>()
     private lateinit var adapter: TasksAdapter
     private var sorted = false
     private lateinit var prefs: SharedPreferences
+    private val viewModel: TasksViewModel by viewModels()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+    override fun onActivityCreated(savedInstanceState: Bundle?) {
+        super.onActivityCreated(savedInstanceState)
+        setHasOptionsMenu(true)
+    }
 
-        prefs = getSharedPreferences("Preferences", MODE_PRIVATE)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        prefs = requireContext().getSharedPreferences("Preferences", AppCompatActivity.MODE_PRIVATE)
         sorted = prefs.getBoolean("sorted", false)
 
         fab.setOnClickListener {
-            BottomSheetDialog().apply { show(supportFragmentManager, BottomSheetDialog.TAG1) }
+            val bottomSheetFragment = BottomSheetDialog()
+            bottomSheetFragment.show(childFragmentManager, bottomSheetFragment.tag)
+
         }
 
-        recyclerView.layoutManager = LinearLayoutManager(this)
+        toolBar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.sortBy -> {
+                    showSortByDialog()
+                    return@setOnMenuItemClickListener true
+                }
+            }
+            false
+        }
+
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.setHasFixedSize(true)
         adapter = if (sorted) {
-            TasksAdapter(this, sortedList)
+            TasksAdapter(requireContext())
         } else
-            TasksAdapter(this, unsortedList)
+            TasksAdapter(requireContext())
         adapter.setHasStableIds(true)
         recyclerView.adapter = adapter
+
+        viewModel.tasks.observe(viewLifecycleOwner) {
+            adapter.submitList(it)
+        }
+
     }
 
     override fun onSaveClick(task: Tasks) {
@@ -52,7 +80,7 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
             if (task.dateTime.isEmpty())
                 pos = sortedList.size
             else
-                while (pos < sortedList.size && sortedList[pos].dateTime.isNotEmpty() && sortedList[pos].date <= task.date)
+                while (pos < sortedList.size && sortedList[pos].dateTime.isNotEmpty() && sortedList[pos].timeInMillis <= task.timeInMillis)
                     pos++
             sortedList.add(pos, task)
         }
@@ -63,14 +91,14 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
         }
     }
 
-    fun showSortByDialog(item: MenuItem) {
+    private fun showSortByDialog() {
 
         sorted = prefs.getBoolean("sorted", false)
         val params: LinearLayout.LayoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.WRAP_CONTENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
-        val dialog = Dialog(this)
+        val dialog = Dialog(requireContext())
         dialog.setContentView(R.layout.sort_by_dialog)
         val layout = dialog.linear
         layout.title.text = resources.getString(R.string.sort_by)
@@ -87,7 +115,7 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
         timeAdded.radioBtn.setOnClickListener {
             prefs.edit().putBoolean("sorted", false).apply()
             if (sorted) {
-                adapter = TasksAdapter(this, unsortedList)
+                adapter = TasksAdapter(requireContext())
                 recyclerView.adapter = adapter
             }
             dialog.dismiss()
@@ -96,7 +124,7 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
         dueDate.radioBtn.setOnClickListener {
             prefs.edit().putBoolean("sorted", true).apply()
             if (!sorted) {
-                adapter = TasksAdapter(this, sortedList)
+                adapter = TasksAdapter(requireContext())
                 recyclerView.adapter = adapter
             }
             dialog.dismiss()
@@ -105,7 +133,7 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
         timeAdded.itemText.setOnClickListener {
             prefs.edit().putBoolean("sorted", false).apply()
             if (sorted) {
-                adapter = TasksAdapter(this, unsortedList)
+                adapter = TasksAdapter(requireContext())
                 recyclerView.adapter = adapter
             }
             dialog.dismiss()
@@ -114,7 +142,7 @@ class MainActivity : AppCompatActivity(), BottomSheetDialog.BottomSheetListener 
         dueDate.itemText.setOnClickListener {
             prefs.edit().putBoolean("sorted", true).apply()
             if (!sorted) {
-                adapter = TasksAdapter(this, sortedList)
+                adapter = TasksAdapter(requireContext())
                 recyclerView.adapter = adapter
             }
             dialog.dismiss()

@@ -1,4 +1,4 @@
-package com.hrithik.taskmanager
+package com.hrithik.taskmanager.ui.addEditTask
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -6,28 +6,31 @@ import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
 import android.view.*
-import android.view.View.OnTouchListener
 import android.view.inputmethod.InputMethodManager
 import androidx.core.content.ContextCompat
+import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.viewModels
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import com.hrithik.taskmanager.data.Tasks
-import kotlinx.android.synthetic.main.bottom_sheet.*
-import java.text.DateFormat
+import com.hrithik.taskmanager.R
+import com.hrithik.taskmanager.databinding.BottomSheetBinding
+import dagger.hilt.android.AndroidEntryPoint
+import java.text.SimpleDateFormat
 import java.util.*
 
-
+@AndroidEntryPoint
 class BottomSheetDialog : BottomSheetDialogFragment() {
 
     companion object {
         const val TAG1 = "BottomSheetDialogFragment"
     }
 
+    private lateinit var binding: BottomSheetBinding
+
+    private val viewModel: AddEditViewModel by viewModels()
+
     private val currentDateTime = Calendar.getInstance()
     private var timePicked = false
-    private lateinit var mListener: BottomSheetListener
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,53 +50,50 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
         return view
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        mListener = context as BottomSheetListener
-        setOnSaveClickListener(mListener)
+        binding = BottomSheetBinding.bind(view)
 
-        taskText.requestFocus()
-        val imm: InputMethodManager =
-            context?.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.showSoftInput(taskText, InputMethodManager.HIDE_IMPLICIT_ONLY)
+        binding.apply {
+            taskText.requestFocus()
+            val imm: InputMethodManager =
+                context?.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showSoftInput(taskText, InputMethodManager.HIDE_IMPLICIT_ONLY)
 
-        taskText.background = null
+            taskText.background = null
+            taskText.setText(viewModel.taskName)
+            dateTimeText.text = viewModel.dateTimeText
+            currentDateTime.timeInMillis = viewModel.timeInMillis
+            dateTimeText.visibility =
+                if (dateTimeText.text.isNullOrEmpty()) View.GONE else View.VISIBLE
 
-        taskText.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable) {
-                saveBtn.isEnabled = s.isNotEmpty()
+            taskText.addTextChangedListener { text ->
+                saveBtn.isEnabled = !text.isNullOrEmpty()
+                viewModel.taskName = text.toString()
             }
 
-            override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
-        })
+            calendarBtn.setOnClickListener { pickDate() }
+            clockBtn.setOnClickListener { pickTime() }
+            /*dateTimeText.setOnTouchListener { v, event ->
 
-        calendarBtn.setOnClickListener { pickDate() }
-        clockBtn.setOnClickListener { pickTime() }
-        dateTimeText.setOnTouchListener(object : OnTouchListener {
-            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-                when (event?.action) {
+                v.performClick()
+                when (event.action) {
                     MotionEvent.ACTION_UP ->
-                        if (event.rawX >= dateTimeText.right - dateTimeText.totalPaddingRight)
+                        if (event.rawX >= dateTimeText.right - dateTimeText.totalPaddingRight) {
+                            dateTimeText.text = ""
                             dateTimeText.visibility = View.GONE
+                            return@setOnTouchListener true
+                        }
                 }
+                return@setOnTouchListener false
+            }*/
 
-                return v?.onTouchEvent(event) ?: true
+            saveBtn.setOnClickListener {
+                viewModel.onSaveClicked()
+                dismiss()
             }
-        })
-
-        saveBtn.setOnClickListener {
-            val task =
-                Tasks(
-                    taskText.text.toString(),
-                    dateTimeText.text.toString(),
-                    currentDateTime.timeInMillis
-                )
-            mListener.onSaveClick(task)
-            dismiss()
         }
-
     }
 
     private fun pickDate() {
@@ -107,10 +107,12 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
         val datePickerDialog = DatePickerDialog(requireContext(), { _, year, month, day ->
             currentDateTime.set(year, month, day, hour, minute, 0)
             currentDateTime.set(Calendar.MILLISECOND, 0)
-            val df = DateFormat.getDateInstance()
-            df.parse(getPattern())
-            dateTimeText.text = df.format(currentDateTime.timeInMillis)
-            dateTimeText.visibility = View.VISIBLE
+            val sdf = SimpleDateFormat(getPattern())
+            binding.dateTimeText.text = sdf.format(currentDateTime.timeInMillis)
+            binding.dateTimeText.visibility = View.VISIBLE
+            viewModel.dateTimeText = binding.dateTimeText.text.toString()
+            viewModel.timeInMillis = currentDateTime.timeInMillis
+
         }, startYear, startMonth, startDay)
         val datePicker = datePickerDialog.datePicker
         datePicker.minDate = System.currentTimeMillis() - 1000
@@ -149,20 +151,22 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
             currentDateTime.set(year, month, day, hour, minute, 0)
             currentDateTime.set(Calendar.MILLISECOND, 0)
             timePicked = true
-            val df = DateFormat.getDateInstance()
-            df.parse(getPattern())
-            dateTimeText.text = df.format(currentDateTime.timeInMillis)
-            dateTimeText.visibility = View.VISIBLE
+            val sdf = SimpleDateFormat(getPattern())
+            binding.dateTimeText.text = sdf.format(currentDateTime.timeInMillis)
+            binding.dateTimeText.visibility = View.VISIBLE
+            viewModel.dateTimeText = binding.dateTimeText.text.toString()
+            viewModel.timeInMillis = currentDateTime.timeInMillis
         }, startHour, startMinute, false)
         timePickerDialog.setButton(TimePickerDialog.BUTTON_NEUTRAL, "Clear") { dialogInterface, _ ->
             currentDateTime.set(year, month, day, 23, 59, 0)
             currentDateTime.set(Calendar.MILLISECOND, 0)
             timePicked = false
             dialogInterface.dismiss()
-            val df = DateFormat.getDateInstance()
-            df.parse(getPattern())
-            dateTimeText.text = df.format(currentDateTime.timeInMillis)
-            dateTimeText.visibility = View.VISIBLE
+            val sdf = SimpleDateFormat(getPattern())
+            binding.dateTimeText.text = sdf.format(currentDateTime.timeInMillis)
+            binding.dateTimeText.visibility = View.VISIBLE
+            viewModel.dateTimeText = binding.dateTimeText.text.toString()
+            viewModel.timeInMillis = currentDateTime.timeInMillis
         }
         timePickerDialog.show()
         when (context?.resources?.configuration?.uiMode?.and(Configuration.UI_MODE_NIGHT_MASK)) {
@@ -198,14 +202,6 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
                     .get(Calendar.YEAR) -> "E, dd MMM, hh:mm a"
                 else -> "E, dd MMM yyyy, hh:mm a"
             }
-    }
-
-    interface BottomSheetListener {
-        fun onSaveClick(task: Tasks)
-    }
-
-    private fun setOnSaveClickListener(listener: BottomSheetListener) {
-        mListener = listener
     }
 
 }

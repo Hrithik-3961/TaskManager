@@ -20,7 +20,9 @@
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/toolBar" />
+        android:layout_below="@id/toolBar"
+        android:clipToPadding="false"
+        android:paddingBottom="20dp" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab"

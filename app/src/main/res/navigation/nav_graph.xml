@@ -9,5 +9,21 @@
         android:id="@+id/homeFragment"
         android:name="com.hrithik.taskmanager.ui.tasks.HomeFragment"
         android:label="fragment_home"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_homeFragment_to_bottomSheetDialog"
+            app:destination="@id/bottomSheetDialog" />
+    </fragment>
+
+    <dialog
+        android:id="@+id/bottomSheetDialog"
+        android:name="com.hrithik.taskmanager.ui.addEditTask.BottomSheetDialog"
+        android:label="bottom_sheet"
+        tools:layout="@layout/bottom_sheet">
+        <argument
+            android:name="task"
+            android:defaultValue="@null"
+            app:argType="com.hrithik.taskmanager.data.Tasks"
+            app:nullable="true" />
+    </dialog>
 </navigation>

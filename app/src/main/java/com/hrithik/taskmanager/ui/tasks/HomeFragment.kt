@@ -1,154 +1,175 @@
 package com.hrithik.taskmanager.ui.tasks
 
 import android.app.Dialog
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.*
 import android.widget.LinearLayout
-import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.hrithik.taskmanager.BottomSheetDialog
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.Snackbar
 import com.hrithik.taskmanager.R
+import com.hrithik.taskmanager.data.SortOrder
 import com.hrithik.taskmanager.data.Tasks
+import com.hrithik.taskmanager.databinding.FragmentHomeBinding
+import com.hrithik.taskmanager.databinding.ItemDialogBinding
+import com.hrithik.taskmanager.databinding.SortByDialogBinding
+import com.hrithik.taskmanager.util.exhaustive
+import com.hrithik.taskmanager.util.onQueryTextChanged
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.fragment_home.*
-import kotlinx.android.synthetic.main.item_dialog.view.*
-import kotlinx.android.synthetic.main.item_task_sorted.*
-import kotlinx.android.synthetic.main.sort_by_dialog.view.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class HomeFragment : Fragment(R.layout.fragment_home), BottomSheetDialog.BottomSheetListener {
+class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickListener {
 
-    private var unsortedList = ArrayList<Tasks>()
-    private var sortedList = ArrayList<Tasks>()
     private lateinit var adapter: TasksAdapter
-    private var sorted = false
-    private lateinit var prefs: SharedPreferences
     private val viewModel: TasksViewModel by viewModels()
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        prefs = requireContext().getSharedPreferences("Preferences", AppCompatActivity.MODE_PRIVATE)
-        sorted = prefs.getBoolean("sorted", false)
 
-        fab.setOnClickListener {
-            val bottomSheetFragment = BottomSheetDialog()
-            bottomSheetFragment.show(childFragmentManager, bottomSheetFragment.tag)
+        adapter = TasksAdapter(false, this)
+        val binding = FragmentHomeBinding.bind(view)
+        binding.apply {
+            fab.setOnClickListener {
+                viewModel.onAddNewTask()
+            }
 
-        }
+            toolBar.setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    R.id.search -> {
+                        val searchView = item.actionView as SearchView
+                        searchView.onQueryTextChanged {
+                            viewModel.searchQuery.value = it
+                        }
+                    }
 
-        toolBar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.sortBy -> {
-                    showSortByDialog()
-                    return@setOnMenuItemClickListener true
+                    R.id.sortBy -> {
+                        showSortByDialog()
+                        return@setOnMenuItemClickListener true
+                    }
+                }
+                false
+            }
+
+            recyclerView.layoutManager = LinearLayoutManager(requireContext())
+            recyclerView.setHasFixedSize(true)
+            recyclerView.adapter = adapter
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewModel.preferencesFLow.collect {
+                    adapter.sorted = it.sortOrder == SortOrder.BY_DUE_DATE
                 }
             }
-            false
+
+            viewModel.tasks.observe(viewLifecycleOwner) {
+                adapter.submitList(it)
+            }
         }
 
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.setHasFixedSize(true)
-        adapter = if (sorted) {
-            TasksAdapter(requireContext())
-        } else
-            TasksAdapter(requireContext())
-        adapter.setHasStableIds(true)
-        recyclerView.adapter = adapter
+        ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
+            0,
+            ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+        ) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ) = false
 
-        viewModel.tasks.observe(viewLifecycleOwner) {
-            adapter.submitList(it)
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val tasks = adapter.currentList[viewHolder.adapterPosition]
+                viewModel.onTaskSwiped(tasks)
+            }
+        }).attachToRecyclerView(binding.recyclerView)
+
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            viewModel.tasksEvent.collect { event ->
+                when (event) {
+                    is TasksViewModel.TasksEvent.ShowUndoDeleteMessage -> {
+                        Snackbar.make(requireView(), "Task Deleted", Snackbar.LENGTH_LONG)
+                            .setAction("UNDO") {
+                                viewModel.onUndoDeleteClicked(event.tasks)
+                            }
+                            .show()
+                    }
+                    is TasksViewModel.TasksEvent.OpenAddTaskBottomSheet -> {
+                        val action =
+                            HomeFragmentDirections.actionHomeFragmentToBottomSheetDialog()
+                        findNavController().navigate(action)
+                    }
+                    is TasksViewModel.TasksEvent.OpenEditTaskBottomSheet -> {
+                        val action =
+                            HomeFragmentDirections.actionHomeFragmentToBottomSheetDialog(event.tasks)
+                        findNavController().navigate(action)
+                    }
+                }.exhaustive
+            }
         }
-
     }
 
-    override fun onSaveClick(task: Tasks) {
-        unsortedList.add(task)
-
-        var pos = 0
-
-        if (sortedList.isEmpty())
-            sortedList.add(task)
-        else {
-            if (task.dateTime.isEmpty())
-                pos = sortedList.size
-            else
-                while (pos < sortedList.size && sortedList[pos].dateTime.isNotEmpty() && sortedList[pos].timeInMillis <= task.timeInMillis)
-                    pos++
-            sortedList.add(pos, task)
-        }
-        if (!sorted)
-            adapter.notifyItemInserted(unsortedList.size)
-        else {
-            adapter.notifyItemInserted(pos)
-        }
-    }
 
     private fun showSortByDialog() {
 
-        sorted = prefs.getBoolean("sorted", false)
         val params: LinearLayout.LayoutParams = LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.WRAP_CONTENT,
             LinearLayout.LayoutParams.WRAP_CONTENT
         )
         val dialog = Dialog(requireContext())
-        dialog.setContentView(R.layout.sort_by_dialog)
-        val layout = dialog.linear
-        layout.title.text = resources.getString(R.string.sort_by)
+        val view = layoutInflater.inflate(R.layout.sort_by_dialog, null)
+        dialog.setContentView(view)
+
+        val binding = SortByDialogBinding.bind(view)
+
+        val layout = binding.linear
+        binding.title.text = resources.getString(R.string.sort_by)
 
         val timeAdded = layoutInflater.inflate(R.layout.item_dialog, null)
         val dueDate = layoutInflater.inflate(R.layout.item_dialog, null)
-        timeAdded.itemText.text = resources.getString(R.string.time_added)
-        dueDate.itemText.text = resources.getString(R.string.due_date)
+
+        val timeAddedBinding = ItemDialogBinding.bind(timeAdded)
+        val dueDateBinding = ItemDialogBinding.bind(dueDate)
+
+        timeAddedBinding.itemText.text = resources.getString(R.string.time_added)
+        dueDateBinding.itemText.text = resources.getString(R.string.due_date)
+        timeAddedBinding.radioBtn.isClickable = false
+        dueDateBinding.radioBtn.isClickable = false
         layout.addView(timeAdded, params)
         layout.addView(dueDate, params)
 
-        if (sorted) dueDate.radioBtn.isChecked = true else timeAdded.radioBtn.isChecked = true
+        viewLifecycleOwner.lifecycleScope.launch {
+            if (viewModel.preferencesFLow.first().sortOrder == SortOrder.BY_TIME_ADDED)
+                timeAddedBinding.radioBtn.isChecked = true
+            else
+                dueDateBinding.radioBtn.isChecked = true
+        }
 
-        timeAdded.radioBtn.setOnClickListener {
-            prefs.edit().putBoolean("sorted", false).apply()
-            if (sorted) {
-                adapter = TasksAdapter(requireContext())
-                recyclerView.adapter = adapter
-            }
+        timeAdded.setOnClickListener {
+            viewModel.onSortOrderSelected(SortOrder.BY_TIME_ADDED)
             dialog.dismiss()
         }
 
-        dueDate.radioBtn.setOnClickListener {
-            prefs.edit().putBoolean("sorted", true).apply()
-            if (!sorted) {
-                adapter = TasksAdapter(requireContext())
-                recyclerView.adapter = adapter
-            }
-            dialog.dismiss()
-        }
-
-        timeAdded.itemText.setOnClickListener {
-            prefs.edit().putBoolean("sorted", false).apply()
-            if (sorted) {
-                adapter = TasksAdapter(requireContext())
-                recyclerView.adapter = adapter
-            }
-            dialog.dismiss()
-        }
-
-        dueDate.itemText.setOnClickListener {
-            prefs.edit().putBoolean("sorted", true).apply()
-            if (!sorted) {
-                adapter = TasksAdapter(requireContext())
-                recyclerView.adapter = adapter
-            }
+        dueDate.setOnClickListener {
+            viewModel.onSortOrderSelected(SortOrder.BY_DUE_DATE)
             dialog.dismiss()
         }
 
         dialog.show()
+    }
+
+    override fun onItemClick(tasks: Tasks) {
+        viewModel.onItemClicked(tasks)
+    }
+
+    override fun onCompletedClicked(tasks: Tasks, isChecked: Boolean) {
+        viewModel.onTaskCompleted(tasks, isChecked)
     }
 
 }

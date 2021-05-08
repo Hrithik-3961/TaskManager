@@ -1,21 +1,19 @@
 package com.hrithik.taskmanager.ui.tasks
 
-import android.content.Context
+import android.graphics.Paint
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.hrithik.taskmanager.data.Tasks
 import com.hrithik.taskmanager.databinding.ItemTaskSortedBinding
 import com.hrithik.taskmanager.databinding.ItemTaskUnsortedBinding
-import kotlinx.android.synthetic.main.item_task_sorted.view.*
-import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.util.*
 
-class TasksAdapter(private var context: Context) :
+class TasksAdapter(var sorted: Boolean, private val listener: OnItemClickListener) :
     ListAdapter<Tasks, RecyclerView.ViewHolder>(DiffCallback()) {
 
     private lateinit var mRecyclerView: RecyclerView
@@ -27,9 +25,11 @@ class TasksAdapter(private var context: Context) :
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
 
-        val prefs = context.getSharedPreferences("Preferences", AppCompatActivity.MODE_PRIVATE)
-        val sorted = prefs.getBoolean("sorted", false)
-        return if (sorted) {
+        val binding =
+            ItemTaskUnsortedBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return UnsortedViewHolder(binding)
+
+        /*return if (sorted) {
             val binding =
                 ItemTaskSortedBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             SortedViewHolder(binding)
@@ -37,7 +37,7 @@ class TasksAdapter(private var context: Context) :
             val binding =
                 ItemTaskUnsortedBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             UnsortedViewHolder(binding)
-        }
+        }*/
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -47,13 +47,12 @@ class TasksAdapter(private var context: Context) :
             viewHolder.bind(currentItem)
         } else {
             val viewHolder = holder as SortedViewHolder
-            val showDate = if (position > 0) {
+            val showDate: Boolean = if (position > 0) {
                 val previousTask = getItem(position - 1)
                 getDueDate(currentItem.timeInMillis, currentItem.dateTime) != getDueDate(
                     previousTask.timeInMillis,
                     previousTask.dateTime
                 )
-
             } else
                 true
 
@@ -65,7 +64,9 @@ class TasksAdapter(private var context: Context) :
                     )
                 )
                     mRecyclerView.post {
-                        mRecyclerView.getChildAt(position + 1).title.visibility = View.GONE
+                        val binding =
+                            ItemTaskSortedBinding.bind(mRecyclerView.getChildAt(position + 1))
+                        binding.title.visibility = View.GONE
                     }
             }
             viewHolder.bind(
@@ -87,36 +88,87 @@ class TasksAdapter(private var context: Context) :
         val pattern = if (calendar.get(Calendar.YEAR) == Calendar.getInstance()
                 .get(Calendar.YEAR)
         ) "E, dd MMM" else "E, dd MMM yyyy"
-        val df = DateFormat.getDateInstance()
-        df.parse(pattern)
-        return df.format(calendar.time)
+        val sdf = SimpleDateFormat(pattern)
+        return sdf.format(calendar.time)
     }
 
-    class UnsortedViewHolder(private val binding: ItemTaskUnsortedBinding) :
+    inner class UnsortedViewHolder(private val binding: ItemTaskUnsortedBinding) :
         RecyclerView.ViewHolder(binding.root) {
+
+        init {
+            binding.apply {
+                root.setOnClickListener {
+                    val position = adapterPosition
+                    if (position != RecyclerView.NO_POSITION) {
+                        val tasks = getItem(position)
+                        listener.onItemClick(tasks)
+                    }
+                }
+                radioBtn.setOnClickListener {
+                    val position = adapterPosition
+                    if (position != RecyclerView.NO_POSITION) {
+                        val tasks = getItem(position)
+                        listener.onCompletedClicked(tasks, !tasks.completed)
+                    }
+                }
+            }
+        }
 
         fun bind(tasks: Tasks) {
             binding.apply {
                 task.text = tasks.task
                 dateTime.text = tasks.dateTime
+                radioBtn.isChecked = tasks.completed
+                if (!tasks.completed)
+                    radioBtn.isChecked = false
+                if (radioBtn.isChecked) {
+                    dateTime.visibility = View.GONE
+                    task.paintFlags = Paint.STRIKE_THRU_TEXT_FLAG
+                } else {
+                    task.paintFlags = 0
+                    dateTime.visibility = View.VISIBLE
+                }
                 if (tasks.dateTime.isEmpty())
                     dateTime.visibility = View.GONE
             }
         }
     }
 
-    class SortedViewHolder(private val binding: ItemTaskSortedBinding) :
+    inner class SortedViewHolder(private val binding: ItemTaskSortedBinding) :
         RecyclerView.ViewHolder(binding.root) {
+
+        init {
+            binding.apply {
+                root.setOnClickListener {
+                    val position = adapterPosition
+                    if (position != RecyclerView.NO_POSITION) {
+                        val tasks = getItem(position)
+                        listener.onItemClick(tasks)
+                    }
+                }
+                radioBtn.setOnClickListener {
+                    val position = adapterPosition
+                    if (position != RecyclerView.NO_POSITION) {
+                        val tasks = getItem(position)
+                        listener.onCompletedClicked(tasks, radioBtn.isChecked)
+                    }
+                }
+            }
+        }
 
         fun bind(tasks: Tasks, showDate: Boolean, date: String) {
             binding.apply {
                 itemText.text = tasks.task
                 title.visibility = if (showDate) View.VISIBLE else View.GONE
                 title.text = date
+                radioBtn.isChecked = tasks.completed
             }
         }
+    }
 
-
+    interface OnItemClickListener {
+        fun onItemClick(tasks: Tasks)
+        fun onCompletedClicked(tasks: Tasks, isChecked: Boolean)
     }
 
     class DiffCallback : DiffUtil.ItemCallback<Tasks>() {

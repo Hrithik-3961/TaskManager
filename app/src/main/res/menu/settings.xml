@@ -13,4 +13,8 @@
         android:id="@+id/sortBy"
         android:title="Sort by" />
 
+    <item
+        android:id="@+id/deleteAllCompleted"
+        android:title="Delete All Completed" />
+
 </menu>

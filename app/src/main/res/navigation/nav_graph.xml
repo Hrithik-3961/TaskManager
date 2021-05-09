@@ -26,4 +26,13 @@
             app:argType="com.hrithik.taskmanager.data.Tasks"
             app:nullable="true" />
     </dialog>
+    <dialog
+        android:id="@+id/deleteAllCompleteDialogFragment"
+        android:name="com.hrithik.taskmanager.ui.dialog.DeleteAllCompleteDialogFragment"
+        android:label="DeleteAllCompleteDialogFragment" />
+    <action
+        android:id="@+id/action_global_deleteAllCompleteDialogFragment"
+        app:destination="@id/deleteAllCompleteDialogFragment" />
+
+
 </navigation>

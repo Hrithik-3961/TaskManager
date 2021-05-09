@@ -31,6 +31,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
 
     private lateinit var adapter: TasksAdapter
     private val viewModel: TasksViewModel by viewModels()
+    private lateinit var searchView: SearchView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -45,7 +46,12 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
             toolBar.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.search -> {
-                        val searchView = item.actionView as SearchView
+                        searchView = item.actionView as SearchView
+                        val pendingQuery = viewModel.searchQuery.value
+                        if (pendingQuery != null && pendingQuery.isNotEmpty()) {
+                            item.expandActionView()
+                            searchView.setQuery(pendingQuery, false)
+                        }
                         searchView.onQueryTextChanged {
                             viewModel.searchQuery.value = it
                         }
@@ -54,6 +60,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
                     R.id.sortBy -> {
                         showSortByDialog()
                         return@setOnMenuItemClickListener true
+                    }
+
+                    R.id.deleteAllCompleted -> {
+                        viewModel.onDeleteAllCompletedClicked()
                     }
                 }
                 false
@@ -110,6 +120,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
                             HomeFragmentDirections.actionHomeFragmentToBottomSheetDialog(event.tasks)
                         findNavController().navigate(action)
                     }
+                    is TasksViewModel.TasksEvent.NavigateToDeleteAllCompletedScreen -> {
+                        val action = HomeFragmentDirections.actionHomeFragmentToBottomSheetDialog()
+                        findNavController().navigate(action)
+                    }
+
                 }.exhaustive
             }
         }
@@ -170,6 +185,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
 
     override fun onCompletedClicked(tasks: Tasks, isChecked: Boolean) {
         viewModel.onTaskCompleted(tasks, isChecked)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        searchView.setOnQueryTextListener(null)
     }
 
 }

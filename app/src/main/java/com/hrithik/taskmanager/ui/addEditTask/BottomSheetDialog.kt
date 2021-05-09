@@ -65,7 +65,7 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
             taskText.setText(viewModel.taskName)
             dateTimeText.text = viewModel.dateTimeText
             currentDateTime.timeInMillis = viewModel.timeInMillis
-            dateTimeText.visibility =
+            dateTimeLayout.visibility =
                 if (dateTimeText.text.isNullOrEmpty()) View.GONE else View.VISIBLE
 
             taskText.addTextChangedListener { text ->
@@ -75,19 +75,11 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
 
             calendarBtn.setOnClickListener { pickDate() }
             clockBtn.setOnClickListener { pickTime() }
-            /*dateTimeText.setOnTouchListener { v, event ->
-
-                v.performClick()
-                when (event.action) {
-                    MotionEvent.ACTION_UP ->
-                        if (event.rawX >= dateTimeText.right - dateTimeText.totalPaddingRight) {
-                            dateTimeText.text = ""
-                            dateTimeText.visibility = View.GONE
-                            return@setOnTouchListener true
-                        }
-                }
-                return@setOnTouchListener false
-            }*/
+            cross.setOnClickListener {
+                dateTimeText.text = ""
+                viewModel.dateTimeText = ""
+                dateTimeLayout.visibility = View.GONE
+            }
 
             saveBtn.setOnClickListener {
                 viewModel.onSaveClicked()
@@ -109,7 +101,7 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
             currentDateTime.set(Calendar.MILLISECOND, 0)
             val sdf = SimpleDateFormat(getPattern())
             binding.dateTimeText.text = sdf.format(currentDateTime.timeInMillis)
-            binding.dateTimeText.visibility = View.VISIBLE
+            binding.dateTimeLayout.visibility = View.VISIBLE
             viewModel.dateTimeText = binding.dateTimeText.text.toString()
             viewModel.timeInMillis = currentDateTime.timeInMillis
 
@@ -153,7 +145,7 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
             timePicked = true
             val sdf = SimpleDateFormat(getPattern())
             binding.dateTimeText.text = sdf.format(currentDateTime.timeInMillis)
-            binding.dateTimeText.visibility = View.VISIBLE
+            binding.dateTimeLayout.visibility = View.VISIBLE
             viewModel.dateTimeText = binding.dateTimeText.text.toString()
             viewModel.timeInMillis = currentDateTime.timeInMillis
         }, startHour, startMinute, false)
@@ -164,7 +156,7 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
             dialogInterface.dismiss()
             val sdf = SimpleDateFormat(getPattern())
             binding.dateTimeText.text = sdf.format(currentDateTime.timeInMillis)
-            binding.dateTimeText.visibility = View.VISIBLE
+            binding.dateTimeLayout.visibility = View.VISIBLE
             viewModel.dateTimeText = binding.dateTimeText.text.toString()
             viewModel.timeInMillis = currentDateTime.timeInMillis
         }

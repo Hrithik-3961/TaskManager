@@ -1,17 +1,18 @@
 package com.hrithik.taskmanager.ui.addEditTask
 
-import androidx.hilt.Assisted
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hrithik.taskmanager.data.TaskDao
 import com.hrithik.taskmanager.data.Tasks
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AddEditViewModel @ViewModelInject constructor(
+@HiltViewModel
+class AddEditViewModel @Inject constructor(
     private val taskDao: TaskDao,
-    @Assisted private val state: SavedStateHandle
+    private val state: SavedStateHandle
 ) : ViewModel() {
 
     val task = state.get<Tasks>("task")

@@ -1,14 +1,15 @@
 package com.hrithik.taskmanager.ui.dialog
 
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.ViewModel
 import com.hrithik.taskmanager.data.TaskDao
 import com.hrithik.taskmanager.di.ApplicationScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-
-class DeleteAllCompletedViewModel @ViewModelInject constructor(
+@HiltViewModel
+class DeleteAllCompletedViewModel @Inject constructor(
     private val taskDao: TaskDao,
     @ApplicationScope private val applicationScope: CoroutineScope
 ) : ViewModel() {

@@ -1,9 +1,8 @@
 package com.hrithik.taskmanager.ui.tasks
 
-import android.app.Dialog
 import android.os.Bundle
+import android.util.Log
 import android.view.*
-import android.widget.LinearLayout
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -17,14 +16,14 @@ import com.hrithik.taskmanager.R
 import com.hrithik.taskmanager.data.SortOrder
 import com.hrithik.taskmanager.data.Tasks
 import com.hrithik.taskmanager.databinding.FragmentHomeBinding
-import com.hrithik.taskmanager.databinding.ItemDialogBinding
-import com.hrithik.taskmanager.databinding.SortByDialogBinding
 import com.hrithik.taskmanager.util.exhaustive
 import com.hrithik.taskmanager.util.onQueryTextChanged
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickListener {
@@ -44,7 +43,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
             }
 
             toolBar.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
+                return@setOnMenuItemClickListener when (item.itemId) {
                     R.id.search -> {
                         searchView = item.actionView as SearchView
                         val pendingQuery = viewModel.searchQuery.value
@@ -55,34 +54,44 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
                         searchView.onQueryTextChanged {
                             viewModel.searchQuery.value = it
                         }
+                        true
                     }
 
                     R.id.sortBy -> {
-                        showSortByDialog()
-                        return@setOnMenuItemClickListener true
+                        viewModel.onSortByClicked()
+                        true
                     }
 
                     R.id.deleteAllCompleted -> {
                         viewModel.onDeleteAllCompletedClicked()
+                        true
                     }
+                    else -> false
                 }
-                false
             }
 
             recyclerView.layoutManager = LinearLayoutManager(requireContext())
             recyclerView.setHasFixedSize(true)
             recyclerView.adapter = adapter
 
-            viewLifecycleOwner.lifecycleScope.launch {
-                viewModel.preferencesFLow.collect {
-                    adapter.sorted = it.sortOrder == SortOrder.BY_DUE_DATE
+            viewModel.tasks.observe(viewLifecycleOwner) { list ->
+                run {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        if (viewModel.preferencesFLow.first().sortOrder == SortOrder.BY_DUE_DATE) {
+
+                            adapter.submitList(updateList(list as ArrayList<Tasks>))
+                            adapter.sorted = true
+                            recyclerView.adapter = adapter
+                        } else {
+                            adapter.submitList(list)
+                            adapter.sorted = false
+                            recyclerView.adapter = adapter
+                        }
+                    }
                 }
             }
-
-            viewModel.tasks.observe(viewLifecycleOwner) {
-                adapter.submitList(it)
-            }
         }
+
 
         ItemTouchHelper(object : ItemTouchHelper.SimpleCallback(
             0,
@@ -97,6 +106,16 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val tasks = adapter.currentList[viewHolder.adapterPosition]
                 viewModel.onTaskSwiped(tasks)
+            }
+
+            override fun getSwipeDirs(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ): Int {
+                val tasks = adapter.currentList[viewHolder.adapterPosition]
+                if (tasks.timeInMillis == 0L)
+                    return 0
+                return super.getSwipeDirs(recyclerView, viewHolder)
             }
         }).attachToRecyclerView(binding.recyclerView)
 
@@ -121,7 +140,14 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
                         findNavController().navigate(action)
                     }
                     is TasksViewModel.TasksEvent.NavigateToDeleteAllCompletedScreen -> {
-                        val action = HomeFragmentDirections.actionHomeFragmentToBottomSheetDialog()
+                        val action =
+                            HomeFragmentDirections.actionGlobalDeleteAllCompleteDialogFragment()
+                        findNavController().navigate(action)
+                    }
+
+                    is TasksViewModel.TasksEvent.NavigateToSortByScreen -> {
+                        val action =
+                            HomeFragmentDirections.actionGlobalSortByDialogFragment(event.sortOrder)
                         findNavController().navigate(action)
                     }
 
@@ -130,53 +156,42 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
         }
     }
 
-
-    private fun showSortByDialog() {
-
-        val params: LinearLayout.LayoutParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
-        val dialog = Dialog(requireContext())
-        val view = layoutInflater.inflate(R.layout.sort_by_dialog, null)
-        dialog.setContentView(view)
-
-        val binding = SortByDialogBinding.bind(view)
-
-        val layout = binding.linear
-        binding.title.text = resources.getString(R.string.sort_by)
-
-        val timeAdded = layoutInflater.inflate(R.layout.item_dialog, null)
-        val dueDate = layoutInflater.inflate(R.layout.item_dialog, null)
-
-        val timeAddedBinding = ItemDialogBinding.bind(timeAdded)
-        val dueDateBinding = ItemDialogBinding.bind(dueDate)
-
-        timeAddedBinding.itemText.text = resources.getString(R.string.time_added)
-        dueDateBinding.itemText.text = resources.getString(R.string.due_date)
-        timeAddedBinding.radioBtn.isClickable = false
-        dueDateBinding.radioBtn.isClickable = false
-        layout.addView(timeAdded, params)
-        layout.addView(dueDate, params)
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            if (viewModel.preferencesFLow.first().sortOrder == SortOrder.BY_TIME_ADDED)
-                timeAddedBinding.radioBtn.isChecked = true
-            else
-                dueDateBinding.radioBtn.isChecked = true
+    private fun updateList(list: ArrayList<Tasks>): ArrayList<Tasks> {
+        var i = 2
+        val task = list[0]
+        list.add(0, Tasks(getDueDate(task.timeInMillis, task.dateTime), "", 0L))
+        while (i < list.size) {
+            val previousTask = list[i - 1]
+            val currentTask = list[i]
+            Log.d("tagPrev$i", previousTask.task)
+            Log.d("tagCurr$i", currentTask.task)
+            if (getDueDate(previousTask.timeInMillis, previousTask.dateTime) != getDueDate(
+                    currentTask.timeInMillis,
+                    currentTask.dateTime
+                )
+            ) {
+                list.add(
+                    i,
+                    Tasks(getDueDate(currentTask.timeInMillis, currentTask.dateTime), "", 0L)
+                )
+                i++
+            }
+            i++
         }
+        return list
+    }
 
-        timeAdded.setOnClickListener {
-            viewModel.onSortOrderSelected(SortOrder.BY_TIME_ADDED)
-            dialog.dismiss()
-        }
+    private fun getDueDate(timeInMillis: Long, dateTime: String): String {
+        if (dateTime.isEmpty())
+            return "No Due Date"
 
-        dueDate.setOnClickListener {
-            viewModel.onSortOrderSelected(SortOrder.BY_DUE_DATE)
-            dialog.dismiss()
-        }
-
-        dialog.show()
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = timeInMillis
+        val pattern = if (calendar.get(Calendar.YEAR) == Calendar.getInstance()
+                .get(Calendar.YEAR)
+        ) "E, dd MMM" else "E, dd MMM yyyy"
+        val sdf = SimpleDateFormat(pattern)
+        return sdf.format(calendar.time)
     }
 
     override fun onItemClick(tasks: Tasks) {

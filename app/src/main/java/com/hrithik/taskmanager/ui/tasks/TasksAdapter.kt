@@ -10,8 +10,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.hrithik.taskmanager.data.Tasks
 import com.hrithik.taskmanager.databinding.ItemTaskSortedBinding
 import com.hrithik.taskmanager.databinding.ItemTaskUnsortedBinding
-import java.text.SimpleDateFormat
-import java.util.*
 
 class TasksAdapter(var sorted: Boolean, private val listener: OnItemClickListener) :
     ListAdapter<Tasks, RecyclerView.ViewHolder>(DiffCallback()) {
@@ -25,11 +23,7 @@ class TasksAdapter(var sorted: Boolean, private val listener: OnItemClickListene
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
 
-        val binding =
-            ItemTaskUnsortedBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-        return UnsortedViewHolder(binding)
-
-        /*return if (sorted) {
+        return if (sorted) {
             val binding =
                 ItemTaskSortedBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             SortedViewHolder(binding)
@@ -37,7 +31,7 @@ class TasksAdapter(var sorted: Boolean, private val listener: OnItemClickListene
             val binding =
                 ItemTaskUnsortedBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             UnsortedViewHolder(binding)
-        }*/
+        }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -47,49 +41,8 @@ class TasksAdapter(var sorted: Boolean, private val listener: OnItemClickListene
             viewHolder.bind(currentItem)
         } else {
             val viewHolder = holder as SortedViewHolder
-            val showDate: Boolean = if (position > 0) {
-                val previousTask = getItem(position - 1)
-                getDueDate(currentItem.timeInMillis, currentItem.dateTime) != getDueDate(
-                    previousTask.timeInMillis,
-                    previousTask.dateTime
-                )
-            } else
-                true
-
-            if (position < itemCount - 1 && itemCount > 1) {
-                val nextTask = getItem(position + 1)
-                if (getDueDate(currentItem.timeInMillis, currentItem.dateTime) == getDueDate(
-                        nextTask.timeInMillis,
-                        nextTask.dateTime
-                    )
-                )
-                    mRecyclerView.post {
-                        val binding =
-                            ItemTaskSortedBinding.bind(mRecyclerView.getChildAt(position + 1))
-                        binding.title.visibility = View.GONE
-                    }
-            }
-            viewHolder.bind(
-                currentItem,
-                showDate,
-                getDueDate(currentItem.timeInMillis, currentItem.dateTime)
-            )
+            viewHolder.bind(currentItem)
         }
-    }
-
-    override fun getItemId(position: Int): Long = getItem(position).id.toLong()
-
-    private fun getDueDate(timeInMillis: Long, dateTime: String): String {
-        if (dateTime.isEmpty())
-            return "No Due Date"
-
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timeInMillis
-        val pattern = if (calendar.get(Calendar.YEAR) == Calendar.getInstance()
-                .get(Calendar.YEAR)
-        ) "E, dd MMM" else "E, dd MMM yyyy"
-        val sdf = SimpleDateFormat(pattern)
-        return sdf.format(calendar.time)
     }
 
     inner class UnsortedViewHolder(private val binding: ItemTaskUnsortedBinding) :
@@ -150,18 +103,27 @@ class TasksAdapter(var sorted: Boolean, private val listener: OnItemClickListene
                     val position = adapterPosition
                     if (position != RecyclerView.NO_POSITION) {
                         val tasks = getItem(position)
-                        listener.onCompletedClicked(tasks, radioBtn.isChecked)
+                        listener.onCompletedClicked(tasks, !tasks.completed)
                     }
                 }
             }
         }
 
-        fun bind(tasks: Tasks, showDate: Boolean, date: String) {
+        fun bind(tasks: Tasks) {
             binding.apply {
                 itemText.text = tasks.task
-                title.visibility = if (showDate) View.VISIBLE else View.GONE
-                title.text = date
+                if (tasks.timeInMillis == 0L) {
+                    radioBtn.visibility = View.GONE
+                    root.setOnClickListener(null)
+                }
                 radioBtn.isChecked = tasks.completed
+                if (!tasks.completed)
+                    radioBtn.isChecked = false
+                if (radioBtn.isChecked)
+                    itemText.paintFlags = Paint.STRIKE_THRU_TEXT_FLAG
+                else
+                    itemText.paintFlags = 0
+
             }
         }
     }
@@ -178,4 +140,5 @@ class TasksAdapter(var sorted: Boolean, private val listener: OnItemClickListene
         override fun areContentsTheSame(oldItem: Tasks, newItem: Tasks): Boolean =
             (oldItem == newItem)
     }
+
 }

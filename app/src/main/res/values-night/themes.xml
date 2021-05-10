@@ -14,4 +14,9 @@
         <!-- Customize your theme here. -->
     </style>
 
+    <style name="dialogButton" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
+        <item name="android:colorAccent">@color/white</item>
+        <item name="android:colorPrimary">@color/white</item>
+    </style>
+
 </resources>

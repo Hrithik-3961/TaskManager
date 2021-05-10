@@ -1,22 +1,24 @@
 package com.hrithik.taskmanager.ui.tasks
 
-import androidx.hilt.Assisted
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.*
 import com.hrithik.taskmanager.data.PreferencesManager
 import com.hrithik.taskmanager.data.SortOrder
 import com.hrithik.taskmanager.data.TaskDao
 import com.hrithik.taskmanager.data.Tasks
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class TasksViewModel @ViewModelInject constructor(
+@HiltViewModel
+class TasksViewModel @Inject constructor(
     private val taskDao: TaskDao,
     private val preferencesManager: PreferencesManager,
-    @Assisted private val state: SavedStateHandle
+    private val state: SavedStateHandle
 ) : ViewModel() {
 
     val searchQuery = state.getLiveData("searchQuery", "")
@@ -32,10 +34,6 @@ class TasksViewModel @ViewModelInject constructor(
         taskDao.getTasks(query, preferences.sortOrder)
     }
     val tasks = taskFlow.asLiveData()
-
-    fun onSortOrderSelected(sortOrder: SortOrder) = viewModelScope.launch {
-        preferencesManager.updateSortOrder(sortOrder)
-    }
 
     fun onItemClicked(tasks: Tasks) = viewModelScope.launch {
         tasksEventChannel.send(TasksEvent.OpenEditTaskBottomSheet(tasks))
@@ -62,11 +60,16 @@ class TasksViewModel @ViewModelInject constructor(
         tasksEventChannel.send(TasksEvent.NavigateToDeleteAllCompletedScreen)
     }
 
+    fun onSortByClicked() = viewModelScope.launch {
+        tasksEventChannel.send(TasksEvent.NavigateToSortByScreen(preferencesFLow.first().sortOrder))
+    }
+
     sealed class TasksEvent {
         object OpenAddTaskBottomSheet : TasksEvent()
         data class OpenEditTaskBottomSheet(val tasks: Tasks) : TasksEvent()
         data class ShowUndoDeleteMessage(val tasks: Tasks) : TasksEvent()
         object NavigateToDeleteAllCompletedScreen : TasksEvent()
+        data class NavigateToSortByScreen(val sortOrder: SortOrder) : TasksEvent()
     }
 
 }

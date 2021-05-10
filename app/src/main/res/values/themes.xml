@@ -15,4 +15,8 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
+    <style name="dialogButton" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
+        <item name="android:colorAccent">@color/black</item>
+    </style>
+
 </resources>

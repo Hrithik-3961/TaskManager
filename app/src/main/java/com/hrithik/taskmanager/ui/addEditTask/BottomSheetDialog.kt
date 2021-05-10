@@ -69,8 +69,8 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
                 if (dateTimeText.text.isNullOrEmpty()) View.GONE else View.VISIBLE
 
             taskText.addTextChangedListener { text ->
-                saveBtn.isEnabled = !text.isNullOrEmpty()
-                viewModel.taskName = text.toString()
+                saveBtn.isEnabled = !text.isNullOrBlank()
+                viewModel.taskName = text.toString().trim()
             }
 
             calendarBtn.setOnClickListener { pickDate() }

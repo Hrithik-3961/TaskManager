@@ -33,6 +33,18 @@
     <action
         android:id="@+id/action_global_deleteAllCompleteDialogFragment"
         app:destination="@id/deleteAllCompleteDialogFragment" />
+    <dialog
+        android:id="@+id/sortByDialogFragment"
+        android:name="com.hrithik.taskmanager.ui.dialog.SortByDialogFragment"
+        android:label="SortByDialogFragment">
+        <argument
+            android:name="sortOrder"
+            android:defaultValue="BY_TIME_ADDED"
+            app:argType="com.hrithik.taskmanager.data.SortOrder" />
+    </dialog>
+    <action
+        android:id="@+id/action_global_sortByDialogFragment"
+        app:destination="@id/sortByDialogFragment" />
 
 
 </navigation>

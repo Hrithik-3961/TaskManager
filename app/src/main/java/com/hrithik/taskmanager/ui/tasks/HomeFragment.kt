@@ -1,7 +1,6 @@
 package com.hrithik.taskmanager.ui.tasks
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
@@ -78,7 +77,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
                 run {
                     viewLifecycleOwner.lifecycleScope.launch {
                         if (viewModel.preferencesFLow.first().sortOrder == SortOrder.BY_DUE_DATE) {
-
                             adapter.submitList(updateList(list as ArrayList<Tasks>))
                             adapter.sorted = true
                             recyclerView.adapter = adapter
@@ -163,8 +161,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
         while (i < list.size) {
             val previousTask = list[i - 1]
             val currentTask = list[i]
-            Log.d("tagPrev$i", previousTask.task)
-            Log.d("tagCurr$i", currentTask.task)
             if (getDueDate(previousTask.timeInMillis, previousTask.dateTime) != getDueDate(
                     currentTask.timeInMillis,
                     currentTask.dateTime

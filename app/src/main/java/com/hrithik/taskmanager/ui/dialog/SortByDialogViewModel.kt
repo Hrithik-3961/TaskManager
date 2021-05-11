@@ -1,13 +1,11 @@
 package com.hrithik.taskmanager.ui.dialog
 
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hrithik.taskmanager.data.PreferencesManager
 import com.hrithik.taskmanager.data.SortOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,6 +19,5 @@ class SortByDialogViewModel @Inject constructor(
 
     fun onSortOrderSelected(sortOrder: SortOrder) = viewModelScope.launch {
         preferencesManager.updateSortOrder(sortOrder)
-        Log.d("Tag", preferencesManager.preferencesFlow.first().sortOrder.toString())
     }
 }

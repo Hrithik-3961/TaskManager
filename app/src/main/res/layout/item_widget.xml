@@ -7,11 +7,10 @@
     android:paddingHorizontal="15dp"
     android:paddingTop="10dp">
 
-    <RadioButton
-        android:id="@+id/radioBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical" />
+    <Button
+        android:id="@+id/btn"
+        android:layout_width="20dp"
+        android:layout_height="30dp" />
 
     <TextView
         android:id="@+id/itemText"
@@ -20,7 +19,6 @@
         android:ellipsize="end"
         android:gravity="center_vertical"
         android:maxLines="1"
-        android:textColor="?attr/colorOnSecondary"
         android:textSize="15sp" />
 
 </LinearLayout>

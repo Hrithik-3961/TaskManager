@@ -1,7 +1,7 @@
 package com.hrithik.taskmanager.ui.dialog
 
 import androidx.lifecycle.ViewModel
-import com.hrithik.taskmanager.data.TaskDao
+import com.hrithik.taskmanager.data.room.TaskDao
 import com.hrithik.taskmanager.di.ApplicationScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope

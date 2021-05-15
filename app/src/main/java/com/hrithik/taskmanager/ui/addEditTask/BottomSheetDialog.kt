@@ -70,7 +70,7 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
 
             taskText.addTextChangedListener { text ->
                 saveBtn.isEnabled = !text.isNullOrBlank()
-                viewModel.taskName = text.toString().trim()
+                viewModel.taskName = text.toString().capitalize(Locale.getDefault()).trim()
             }
 
             calendarBtn.setOnClickListener { pickDate() }
@@ -195,5 +195,4 @@ class BottomSheetDialog : BottomSheetDialogFragment() {
                 else -> "E, dd MMM yyyy, hh:mm a"
             }
     }
-
 }

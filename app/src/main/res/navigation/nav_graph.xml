@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/homeFragment">
+    app:startDestination="@id/authentication">
 
     <fragment
         android:id="@+id/homeFragment"
@@ -13,6 +13,9 @@
         <action
             android:id="@+id/action_homeFragment_to_bottomSheetDialog"
             app:destination="@id/bottomSheetDialog" />
+        <action
+            android:id="@+id/action_homeFragment_to_authentication"
+            app:destination="@id/authentication" />
     </fragment>
 
     <dialog
@@ -45,6 +48,15 @@
     <action
         android:id="@+id/action_global_sortByDialogFragment"
         app:destination="@id/sortByDialogFragment" />
+    <fragment
+        android:id="@+id/authentication"
+        android:name="com.hrithik.taskmanager.data.firebase.Authentication"
+        android:label="fragment_sign_in"
+        tools:layout="@layout/fragment_sign_in">
+        <action
+            android:id="@+id/action_authentication_to_homeFragment"
+            app:destination="@id/homeFragment" />
+    </fragment>
 
 
 </navigation>

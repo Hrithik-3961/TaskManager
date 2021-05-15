@@ -20,7 +20,9 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".ui.widget.WidgetProvider">
+        <receiver
+            android:name=".ui.widget.WidgetProvider"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>

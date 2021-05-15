@@ -2,7 +2,7 @@ package com.hrithik.taskmanager.di
 
 import android.app.Application
 import androidx.room.Room
-import com.hrithik.taskmanager.data.TasksDatabase
+import com.hrithik.taskmanager.data.room.TasksDatabase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

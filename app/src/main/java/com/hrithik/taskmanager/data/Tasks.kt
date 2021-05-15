@@ -14,4 +14,7 @@ data class Tasks(
     val completed: Boolean = false,
     val created: Long = System.currentTimeMillis(),
     @PrimaryKey(autoGenerate = true) val id: Int = 0
-) : Parcelable
+) : Parcelable {
+
+    constructor() : this("", "", 0L)//required for Firebase
+}

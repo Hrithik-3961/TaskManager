@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickListener {
 
@@ -65,6 +66,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
                         viewModel.onDeleteAllCompletedClicked()
                         true
                     }
+
+                    R.id.logout -> {
+                        viewModel.onLogOutClicked(requireContext())
+                        true
+                    }
                     else -> false
                 }
             }
@@ -74,6 +80,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
             recyclerView.adapter = adapter
 
             viewModel.tasks.observe(viewLifecycleOwner) { list ->
+                if (list.isEmpty())
+                    viewModel.addAllTasksToRoom()
                 run {
                     viewLifecycleOwner.lifecycleScope.launch {
                         if (viewModel.preferencesFLow.first().sortOrder == SortOrder.BY_DUE_DATE) {
@@ -149,30 +157,38 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
                         findNavController().navigate(action)
                     }
 
+                    is TasksViewModel.TasksEvent.NavigateToSignInScreen -> {
+                        val action =
+                            HomeFragmentDirections.actionHomeFragmentToAuthentication()
+                        findNavController().navigate(action)
+                    }
+
                 }.exhaustive
             }
         }
     }
 
     private fun updateList(list: ArrayList<Tasks>): ArrayList<Tasks> {
-        var i = 2
-        val task = list[0]
-        list.add(0, Tasks(getDueDate(task.timeInMillis, task.dateTime), "", 0L))
-        while (i < list.size) {
-            val previousTask = list[i - 1]
-            val currentTask = list[i]
-            if (getDueDate(previousTask.timeInMillis, previousTask.dateTime) != getDueDate(
-                    currentTask.timeInMillis,
-                    currentTask.dateTime
-                )
-            ) {
-                list.add(
-                    i,
-                    Tasks(getDueDate(currentTask.timeInMillis, currentTask.dateTime), "", 0L)
-                )
+        if (list.size > 0) {
+            var i = 2
+            val task = list[0]
+            list.add(0, Tasks(getDueDate(task.timeInMillis, task.dateTime), "", 0L))
+            while (i < list.size) {
+                val previousTask = list[i - 1]
+                val currentTask = list[i]
+                if (getDueDate(previousTask.timeInMillis, previousTask.dateTime) != getDueDate(
+                        currentTask.timeInMillis,
+                        currentTask.dateTime
+                    )
+                ) {
+                    list.add(
+                        i,
+                        Tasks(getDueDate(currentTask.timeInMillis, currentTask.dateTime), "", 0L)
+                    )
+                    i++
+                }
                 i++
             }
-            i++
         }
         return list
     }
@@ -196,11 +212,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
 
     override fun onCompletedClicked(tasks: Tasks, isChecked: Boolean) {
         viewModel.onTaskCompleted(tasks, isChecked)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        searchView.setOnQueryTextListener(null)
     }
 
 }

@@ -5,20 +5,55 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:paddingHorizontal="15dp"
-    android:paddingTop="10dp">
-
-    <Button
-        android:id="@+id/btn"
-        android:layout_width="20dp"
-        android:layout_height="30dp" />
+    android:background="@color/dark_grey_1"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp">
 
     <TextView
-        android:id="@+id/itemText"
+        android:id="@+id/btn"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center_vertical"
+        android:background="@drawable/round"
+        android:backgroundTint="@color/white" />
+
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:ellipsize="end"
-        android:gravity="center_vertical"
-        android:maxLines="1"
-        android:textSize="15sp" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="10dp">
+
+        <TextView
+            android:id="@+id/itemText"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textSize="20sp" />
+
+        <LinearLayout
+            android:id="@+id/dateTimeLinear"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/calendarIcon"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:background="@drawable/calendar"
+                android:backgroundTint="@color/dark_blue_2" />
+
+            <TextView
+                android:id="@+id/dateTimeText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingHorizontal="10dp"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
 
 </LinearLayout>

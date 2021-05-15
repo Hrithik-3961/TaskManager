@@ -4,4 +4,7 @@
     <string name="time_added">Time Added</string>
     <string name="due_date">Due Date</string>
     <string name="sort_by">Sort by</string>
+    <string name="search">Search</string>
+    <string name="delete_all_completed">Delete All Completed</string>
+    <string name="log_out">Log Out</string>
 </resources>

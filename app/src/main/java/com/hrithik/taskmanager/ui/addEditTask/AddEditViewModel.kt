@@ -3,8 +3,10 @@ package com.hrithik.taskmanager.ui.addEditTask
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hrithik.taskmanager.data.TaskDao
+import com.google.firebase.auth.FirebaseAuth
 import com.hrithik.taskmanager.data.Tasks
+import com.hrithik.taskmanager.data.firebase.FirebaseDatabase
+import com.hrithik.taskmanager.data.room.TaskDao
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -14,6 +16,8 @@ class AddEditViewModel @Inject constructor(
     private val taskDao: TaskDao,
     private val state: SavedStateHandle
 ) : ViewModel() {
+
+    val database = FirebaseDatabase(FirebaseAuth.getInstance().currentUser!!.uid)
 
     val task = state.get<Tasks>("task")
 
@@ -55,10 +59,12 @@ class AddEditViewModel @Inject constructor(
 
     private fun createTask(newTask: Tasks) = viewModelScope.launch {
         taskDao.insert(newTask)
+        database.insert(newTask)
     }
 
     private fun updateTask(updatedTask: Tasks) = viewModelScope.launch {
         taskDao.update(updatedTask)
+        database.insert(updatedTask)
     }
 
 

@@ -5,37 +5,39 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
-import android.util.Log
 import android.widget.RemoteViews
-import com.google.gson.Gson
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.asLiveData
 import com.hrithik.taskmanager.R
 import com.hrithik.taskmanager.data.PreferencesManager
+import com.hrithik.taskmanager.data.Tasks
 import com.hrithik.taskmanager.data.room.TaskDao
 import com.hrithik.taskmanager.di.ApplicationScope
 import com.hrithik.taskmanager.ui.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.flatMapLatest
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class WidgetProvider : AppWidgetProvider() {
 
     companion object {
-        const val ACTION_REFRESH = "actionRefresh"
+        lateinit var tasks: LiveData<List<Tasks>>
     }
 
     @Inject
     lateinit var taskDao: TaskDao
 
     @Inject
+    lateinit var preferencesManager: PreferencesManager
+
+    @Inject
     @ApplicationScope
     lateinit var applicationScope: CoroutineScope
 
-    @Inject
-    lateinit var preferencesManager: PreferencesManager
 
     override fun onUpdate(
         context: Context?,
@@ -43,66 +45,56 @@ class WidgetProvider : AppWidgetProvider() {
         appWidgetIds: IntArray?
     ) {
         if (appWidgetIds != null) {
+
             for (appWidgetId in appWidgetIds) {
-                val intent = Intent(context, MainActivity::class.java)
-                val pendingIntent = PendingIntent.getActivity(context, 0, intent, 0)
+                val homeIntent = Intent(context, MainActivity::class.java)
+                val pendingHomeIntent = PendingIntent.getActivity(context, 0, homeIntent, 0)
+
+                val addIntent = Intent(context, MainActivity::class.java)
+                val pendingAddIntent = PendingIntent.getActivity(context, 0, addIntent, 0)
 
                 val serviceIntent = Intent(context, WidgetService::class.java)
                 serviceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
                 serviceIntent.data = Uri.parse(serviceIntent.toUri(Intent.URI_INTENT_SCHEME))
 
-                val refreshIntent = Intent(context, MainActivity::class.java)
-                val pending = PendingIntent.getBroadcast(
-                    context,
-                    100,
-                    refreshIntent,
-                    PendingIntent.FLAG_UPDATE_CURRENT
-                )
-                refreshIntent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                refreshIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+                var view = RemoteViews(context?.packageName, R.layout.layout_widget_dark)
 
-                val view =
-                    RemoteViews(context?.packageName, R.layout.layout_widget)
-                view.setOnClickPendingIntent(R.id.text, pendingIntent)
-                view.setOnClickPendingIntent(R.id.refresh, pending)
-                /*when (context?.resources?.configuration?.uiMode?.and(Configuration.UI_MODE_NIGHT_MASK)) {
-                    Configuration.UI_MODE_NIGHT_NO -> {
-                        view.setInt(R.id.listView, "setBackgroundResource", R.drawable.bottom_rounded_light)
+                when (context?.resources?.configuration?.uiMode?.and(Configuration.UI_MODE_NIGHT_MASK)) {
+                    Configuration.UI_MODE_NIGHT_YES -> {
+                        view =
+                            RemoteViews(context.packageName, R.layout.layout_widget_dark)
                     }
-                }*/
+                    Configuration.UI_MODE_NIGHT_NO -> {
+                        view =
+                            RemoteViews(context.packageName, R.layout.layout_widget_light)
+                    }
+                }
+                view.setOnClickPendingIntent(R.id.text, pendingHomeIntent)
+                view.setOnClickPendingIntent(R.id.add, pendingAddIntent)
 
-                applicationScope.launch {
-                    val preferences = preferencesManager.preferencesFlow.first()
-                    val l = taskDao.getTasks(preferences.sortOrder).first()
+                val preferencesFLow = preferencesManager.preferencesFlow
+                val taskFlow = preferencesFLow.flatMapLatest { preferences ->
+                    taskDao.getTasks(preferences.sortOrder)
+                }
 
-                    val list = ArrayList(l)
-                    Log.d("tag1", preferences.sortOrder.name)
-                    Log.d("tag2", list.toString())
-                    val gson = Gson()
-                    val json = gson.toJson(list)
-                    serviceIntent.putExtra("tasks", json)
+                tasks = taskFlow.asLiveData()
+
+                tasks.observeForever {
                     view.setRemoteAdapter(R.id.listView, serviceIntent)
+                    appWidgetManager?.updateAppWidget(appWidgetId, view)
                     appWidgetManager?.notifyAppWidgetViewDataChanged(
                         appWidgetId,
                         R.id.listView
                     )
-                    appWidgetManager?.updateAppWidget(appWidgetId, view)
                 }
             }
         }
-
     }
 
-    /*override fun onReceive(context: Context?, intent: Intent?) {
-        Log.d("mytag", intent?.action!!)
-        if (ACTION_REFRESH == intent.action) {
-            val appWidgetId = intent.getIntExtra(
-                AppWidgetManager.EXTRA_APPWIDGET_ID,
-                AppWidgetManager.INVALID_APPWIDGET_ID
-            )
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.listView)
-        }
+    override fun onReceive(context: Context?, intent: Intent?) {
+        val ids = intent?.getIntArrayExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS)
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        appWidgetManager.notifyAppWidgetViewDataChanged(ids, R.id.listView)
         super.onReceive(context, intent)
-    }*/
+    }
 }

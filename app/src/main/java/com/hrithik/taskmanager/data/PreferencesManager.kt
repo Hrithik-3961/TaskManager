@@ -32,6 +32,7 @@ class PreferencesManager @Inject constructor(@ApplicationContext cntxt: Context)
             val sortOrder = SortOrder.valueOf(
                 preferences[PreferencesKeys.SORT_ORDER] ?: SortOrder.BY_TIME_ADDED.name
             )
+
             Preferences(sortOrder)
         }
 

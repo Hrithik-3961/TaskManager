@@ -1,5 +1,8 @@
 package com.hrithik.taskmanager.ui.tasks
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Intent
 import android.os.Bundle
 import android.view.*
 import androidx.appcompat.widget.SearchView
@@ -15,6 +18,7 @@ import com.hrithik.taskmanager.R
 import com.hrithik.taskmanager.data.SortOrder
 import com.hrithik.taskmanager.data.Tasks
 import com.hrithik.taskmanager.databinding.FragmentHomeBinding
+import com.hrithik.taskmanager.ui.widget.WidgetProvider
 import com.hrithik.taskmanager.util.exhaustive
 import com.hrithik.taskmanager.util.onQueryTextChanged
 import dagger.hilt.android.AndroidEntryPoint
@@ -82,19 +86,24 @@ class HomeFragment : Fragment(R.layout.fragment_home), TasksAdapter.OnItemClickL
             viewModel.tasks.observe(viewLifecycleOwner) { list ->
                 if (list.isEmpty())
                     viewModel.addAllTasksToRoom()
-                run {
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        if (viewModel.preferencesFLow.first().sortOrder == SortOrder.BY_DUE_DATE) {
-                            adapter.submitList(updateList(list as ArrayList<Tasks>))
-                            adapter.sorted = true
-                            recyclerView.adapter = adapter
-                        } else {
-                            adapter.submitList(list)
-                            adapter.sorted = false
-                            recyclerView.adapter = adapter
-                        }
+                viewLifecycleOwner.lifecycleScope.launch {
+                    if (viewModel.preferencesFLow.first().sortOrder == SortOrder.BY_DUE_DATE) {
+                        adapter.submitList(updateList(list as ArrayList<Tasks>))
+                        adapter.sorted = true
+                        recyclerView.adapter = adapter
+                    } else {
+                        adapter.submitList(list)
+                        adapter.sorted = false
+                        recyclerView.adapter = adapter
                     }
                 }
+                val intent = Intent(requireContext(), WidgetProvider::class.java)
+                intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                val ids: IntArray = AppWidgetManager.getInstance(requireContext())
+                    .getAppWidgetIds(ComponentName(requireContext(), WidgetProvider::class.java))
+                intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                requireContext().sendBroadcast(intent)
+
             }
         }
 

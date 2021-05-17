@@ -5,15 +5,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
-import android.util.Log
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.RemoteViews
 import android.widget.RemoteViewsService
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.hrithik.taskmanager.R
 import com.hrithik.taskmanager.data.Tasks
-import java.lang.reflect.Type
 
 
 class WidgetService : RemoteViewsService() {
@@ -38,17 +36,21 @@ class WidgetService : RemoteViewsService() {
         }
 
         override fun onCreate() {
-            Log.d("tag", "data created")
-            val gson = Gson()
-            val myType: Type = object : TypeToken<ArrayList<Tasks>>() {}.type
-            list = gson.fromJson(intent.getStringExtra("tasks"), myType)
+            Handler(Looper.getMainLooper()).post {
+                WidgetProvider.tasks.observeForever {
+                    list = ArrayList(it)
+                }
+            }
+
         }
 
         override fun onDataSetChanged() {
-            Log.d("tag", "data changed")
-            val gson = Gson()
-            val myType: Type = object : TypeToken<ArrayList<Tasks>>() {}.type
-            list = gson.fromJson(intent.getStringExtra("tasks"), myType)
+            Handler(Looper.getMainLooper()).post {
+                WidgetProvider.tasks.observeForever {
+                    list = ArrayList(it)
+                }
+            }
+
         }
 
         override fun onDestroy() {
